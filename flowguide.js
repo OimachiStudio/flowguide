@@ -3,25 +3,25 @@
 ----------------------- */
 Webflow.push(function() {
   setTimeout(function() {
-    var $subnavRow = $('.fg-nav_row.is-subnav');
+    var $subnavRow = $('[class*="fg-nav_row"][class*="is-subnav"]');
 
     if ($subnavRow.length) {
       /* -----------------------
       01.1 – Create Subnav
       ----------------------- */
-      // console.log("Subnav row found, generating subnav...");
-      // console.log("Initial subnav content:", $subnavRow.html());
+      console.log("Subnav row found, generating subnav...");
+      console.log("Initial subnav content:", $subnavRow.html());
       
       // Store the first item before removing others
       var $firstItem = $subnavRow.children().first();
-      // console.log("First item saved:", $firstItem.prop('outerHTML'));
+      console.log("First item saved:", $firstItem.prop('outerHTML'));
       
       // Remove all OTHER nav items except the first one
       $subnavRow.children().not($firstItem).remove();
       
       var navItems = [];
 
-      $('.fg-title_heading').each(function() {
+      $('[class*="fg-title_heading"]').each(function() {
         var $heading = $(this);
         var headingText = $heading.text().trim();
         var sectionId = headingText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -43,32 +43,32 @@ Webflow.push(function() {
           }).text(customText);
 
           navItems.push($navItem);
-          // console.log("Created nav item:", $navItem.prop('outerHTML'));
+          console.log("Created nav item:", $navItem.prop('outerHTML'));
         }
       });
 
       // Insert after the first item (which we kept)
-      // console.log("Inserting after first item");
+      console.log("Inserting after first item");
       $firstItem.after(navItems);
       
-      // console.log("Subnav generated successfully.");
+      console.log("Subnav generated successfully.");
     } else {
       /* -----------------------
       01.2 – Create Nav (onepage)
       ----------------------- */
-      // console.log("Subnav row not found, generating primary nav...");
+      console.log("Subnav row not found, generating primary nav...");
 
-      var $primaryNavRow = $('.fg-nav_row.is-primary');
+      var $primaryNavRow = $('[class*="fg-nav_row"][class*="is-primary"]');
       if (!$primaryNavRow.length) return console.warn("Primary nav row not found.");
 
       // Only remove .fg-nav_item elements that are direct children
-      $primaryNavRow.children('.fg-nav_item').remove();
+      $primaryNavRow.children('[class*="fg-nav_item"]').remove();
 
       var navIndex = 1;
       var $firstChild = $primaryNavRow.children().first();
       var navItems = [];
 
-      $('.fg-title_heading').each(function() {
+      $('[class*="fg-title_heading"]').each(function() {
         var $heading = $(this);
         var headingText = $heading.text().trim();
         var sectionId = headingText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -108,7 +108,7 @@ Webflow.push(function() {
 
       $firstChild.after(navItems);
 
-      // console.log("Primary nav generated successfully.");
+      console.log("Primary nav generated successfully.");
     }
   }, 200);
 });
@@ -131,7 +131,7 @@ $('a[href^="#"]').on('click', function (e) {
 ----------------------- */
 $(document).ready(function() {
     // Get all visible menu items (these are <a> tags)
-    const menuItems = $('.fg-nav_row.is-primary .fg-nav_item:visible');
+    const menuItems = $('[class*="fg-nav_row"][class*="is-primary"] [class*="fg-nav_item"]:visible');
     
     // Find the index of current page in menu items
     let currentIndex = -1;
@@ -146,67 +146,67 @@ $(document).ready(function() {
     if (currentIndex === -1) return;
     
     // Handle previous page elements
-    const prevLink = $('[fg-pagination="prev-link"]');
-    const prevChapter = $('[fg-pagination="prev-chapter"]');
-    const prevNumber = $('[fg-pagination="prev-number"]');
+    const prevLink = '[fg-pagination="prev-link"]';
+    const prevChapter = '[fg-pagination="prev-chapter"]';
+    const prevNumber = '[fg-pagination="prev-number"]';
     
     // Handle next page elements
-    const nextLink = $('[fg-pagination="next-link"]');
-    const nextChapter = $('[fg-pagination="next-chapter"]');
-    const nextNumber = $('[fg-pagination="next-number"]');
+    const nextLink = '[fg-pagination="next-link"]';
+    const nextChapter = '[fg-pagination="next-chapter"]';
+    const nextNumber = '[fg-pagination="next-number"]';
     
     // Remove any existing click handlers
-    prevLink.off('click');
-    nextLink.off('click');
+    $(prevLink).off('click');
+    $(nextLink).off('click');
     
     // Handle previous page
     if (currentIndex > 0) {
         const prevItem = menuItems.eq(currentIndex - 1);
         const prevUrl = prevItem.attr('href');
-        const prevTitle = prevItem.find('.fg-nav_item-title').text().trim();
-        const prevNum = prevItem.find('.fg-nav_item-number').text().trim();
+        const prevTitle = prevItem.find('[class*="fg-nav_item-title"]').text().trim();
+        const prevNum = prevItem.find('[class*="fg-nav_item-number"]').text().trim();
         
         if (prevUrl) {
-            prevLink.attr('href', prevUrl);
-            prevChapter.text(prevTitle);
-            prevNumber.text(prevNum);
-            prevLink.css('display', 'flex');
+            $(prevLink).attr('href', prevUrl);
+            $(prevChapter).text(prevTitle);
+            $(prevNumber).text(prevNum);
+            $(prevLink).css('display', 'flex');
             
             // Add click handler that forces navigation
-            prevLink.on('click', function(e) {
+            $(prevLink).on('click', function(e) {
                 e.preventDefault();
                 window.location.href = prevUrl;
             });
         } else {
-            prevLink.css('display', 'none');
+            $(prevLink).css('display', 'none');
         }
     } else {
-        prevLink.css('display', 'none');
+        $(prevLink).css('display', 'none');
     }
     
     // Handle next page
     if (currentIndex < menuItems.length - 1) {
         const nextItem = menuItems.eq(currentIndex + 1);
         const nextUrl = nextItem.attr('href');
-        const nextTitle = nextItem.find('.fg-nav_item-title').text().trim();
-        const nextNum = nextItem.find('.fg-nav_item-number').text().trim();
+        const nextTitle = nextItem.find('[class*="fg-nav_item-title"]').text().trim();
+        const nextNum = nextItem.find('[class*="fg-nav_item-number"]').text().trim();
         
         if (nextUrl) {
-            nextLink.attr('href', nextUrl);
-            nextChapter.text(nextTitle);
-            nextNumber.text(nextNum);
-            nextLink.css('display', 'flex');
+            $(nextLink).attr('href', nextUrl);
+            $(nextChapter).text(nextTitle);
+            $(nextNumber).text(nextNum);
+            $(nextLink).css('display', 'flex');
             
             // Add click handler that forces navigation
-            nextLink.on('click', function(e) {
+            $(nextLink).on('click', function(e) {
                 e.preventDefault();
                 window.location.href = nextUrl;
             });
         } else {
-            nextLink.css('display', 'none');
+            $(nextLink).css('display', 'none');
         }
     } else {
-        nextLink.css('display', 'none');
+        $(nextLink).css('display', 'none');
     }
 });
 
@@ -223,9 +223,9 @@ $(document).ready(function() {
         keyMap.clear();
         
         // Build the key mapping from the nav items
-        $('.fg-nav_row.is-primary > a.fg-nav_item').not('.fg-nav_cta-wrapper a.fg-nav_item').each(function() {
+        $('[class*="fg-nav_row"][class*="is-primary"] > a[class*="fg-nav_item"]').not('[class*="fg-nav_cta-wrapper"] a[class*="fg-nav_item"]').each(function() {
             const $link = $(this);
-            const keyValue = $link.find('.fg-nav_item-number').text().toLowerCase();
+            const keyValue = $link.find('[class*="fg-nav_item-number"]').text().toLowerCase();
             
             if (keyValue) {
                 keyMap.set(keyValue, $link);
@@ -243,7 +243,7 @@ $(document).ready(function() {
         
         // Special case for 'a' key - navigate to CTA wrapper item URL
         if (key === 'a') {
-            const $ctaLink = $('.fg-nav_cta-wrapper a.fg-nav_item').first();
+            const $ctaLink = $('[class*="fg-nav_cta-wrapper"] a[class*="fg-nav_item"]').first();
             const ctaUrl = $ctaLink.attr('href');
             if (ctaUrl) {
                 window.location.href = ctaUrl;
@@ -267,19 +267,17 @@ $(document).ready(function() {
     }, 250);
 });
 
-
 /* -----------------------
 04 – Tablet/Mobile Menu
 ----------------------- */
-$(document).on('click', '.fg-nav_item, .fg-nav_overlay', function () {
-    $('.fg-nav_button').trigger('click');
+$(document).on('click', '[class*="fg-nav_item"], [class*="fg-nav_overlay"]', function () {
+    $('[class*="fg-nav_button"]').trigger('click');
 });
-
 
 /* -----------------------
 05 – Copy HEX Color
 ----------------------- */
-$('.fg-color_wrapper').on('click', function() {
+$('[class*="fg-color_wrapper"]').on('click', function() {
     const hexValue = $(this).find('.is-hex').text();
     navigator.clipboard.writeText(hexValue);
 });
@@ -338,15 +336,15 @@ $(document).ready(function() {
   }
 
   // Store original text for both elements
-  const textContent = $('.fg-font-preview_text').text();
-  const nameContent = $('.fg-font-preview_name').text();
+  const textContent = $('[class*="fg-font-preview_text"]').text();
+  const nameContent = $('[class*="fg-font-preview_name"]').text();
 
   // Only set up hover events if device is large enough
   if (isLargeDevice()) {
     // Hover in
-    $('.fg-font-preview_component').on('mouseenter', function() {
-      const $nameWrapper = $(this).find('.fg-font-preview_name-wrapper');
-      const $text = $(this).find('.fg-font-preview_text');
+    $('[class*="fg-font-preview_component"]').on('mouseenter', function() {
+      const $nameWrapper = $(this).find('[class*="fg-font-preview_name-wrapper"]');
+      const $text = $(this).find('[class*="fg-font-preview_text"]');
       
       // Hide name wrapper immediately
       $nameWrapper.hide();
@@ -357,10 +355,10 @@ $(document).ready(function() {
     });
 
     // Hover out
-    $('.fg-font-preview_component').on('mouseleave', function() {
-      const $sampleWrapper = $(this).find('.fg-font-preview_sample-wrapper');
-      const $name = $(this).find('.fg-font-preview_name');
-      const $nameWrapper = $(this).find('.fg-font-preview_name-wrapper');
+    $('[class*="fg-font-preview_component"]').on('mouseleave', function() {
+      const $sampleWrapper = $(this).find('[class*="fg-font-preview_sample-wrapper"]');
+      const $name = $(this).find('[class*="fg-font-preview_name"]');
+      const $nameWrapper = $(this).find('[class*="fg-font-preview_name-wrapper"]');
       
       // Show sample wrapper and name wrapper
       $sampleWrapper.show();
@@ -379,7 +377,7 @@ $(document).ready(function() {
     resizeTimer = setTimeout(function() {
       // Remove event handlers if device becomes too small
       if (!isLargeDevice()) {
-        $('.fg-font-preview_component').off('mouseenter mouseleave');
+        $('[class*="fg-font-preview_component"]').off('mouseenter mouseleave');
       }
     }, 250);
   });
