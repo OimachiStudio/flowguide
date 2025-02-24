@@ -340,7 +340,7 @@ Webflow.push(function () {
 });
 
 /* -----------------------
-03 – Keyboard Navigation
+03 – Keyboard Navigation (Attribute-Based)
 ----------------------- */
 Webflow.push(function () {
   // Create a mapping of key shortcuts to their corresponding links
@@ -350,90 +350,165 @@ Webflow.push(function () {
   function buildKeyMap() {
     // Clear the existing map
     keyMap.clear();
+    console.log("Building keyboard navigation map...");
 
-    // Build the key mapping from the nav items
-    $('.fg-nav_row.is-primary > [class^="fg-nav_item"] > a.fg-nav_item')
-      .not(".fg-nav_cta-wrapper a.fg-nav_item")
-      .each(function () {
-        const $link = $(this);
-        const keyValue = $link.find(".fg-nav_item-number").text().toLowerCase();
+    // Use attribute selector to find all navigation items
+    const navItems = $('[fg-nav="item"]');
+    console.log(`Found ${navItems.length} navigation items`);
 
-        if (keyValue) {
-          console.log(
-            "Adding keyboard shortcut:",
-            keyValue,
-            "for link:",
-            $link.find(".fg-nav_item-title").text()
-          );
-          keyMap.set(keyValue, $link);
-        }
-      });
+    navItems.each(function () {
+      const $link = $(this);
+      // Find the number element by class since it doesn't have an attribute
+      const $number = $link.find('[class*="fg-nav_item-number"]');
 
-    // Add special case for Assets link
-    const $ctaLink = $(".fg-nav_cta-wrapper a.fg-nav_item")
-      .not(".fg-nav_web")
-      .first();
-    if ($ctaLink.length) {
-      console.log(
-        "Adding keyboard shortcut: a for link:",
-        $ctaLink.find(".fg-nav_item-title").text()
-      );
-      keyMap.set("a", $ctaLink);
-    }
-  }
-
-  // Function to initialize keyboard navigation
-  function initKeyboardNav() {
-    // Check if navigation is ready
-    if (!window.fgPagination || !window.fgPagination.isReady) {
-      console.log("Navigation not ready, waiting...");
-      setTimeout(initKeyboardNav, 100);
-      return;
-    }
-
-    console.log("Navigation ready, setting up keyboard shortcuts...");
-
-    // Build the initial key map
-    buildKeyMap();
-
-    // Handle keyboard events
-    $(document).on("keypress.fgNav", function (e) {
-      // Ignore key events if target is an input or textarea
-      if ($(e.target).is("input, textarea")) {
-        return;
-      }
-
-      // Convert keyCode to character
-      const key = String.fromCharCode(e.which).toLowerCase();
-
-      // Check if we have a link mapped to this key
-      const $targetLink = keyMap.get(key);
-      if ($targetLink) {
+      if ($number.length) {
+        const keyValue = $number.text().toLowerCase();
         console.log(
-          "Keyboard navigation:",
-          key,
-          "→",
-          $targetLink.find(".fg-nav_item-title").text()
+          `Adding keyboard shortcut: ${keyValue} for link:`,
+          $link.attr("href")
         );
-        const url = $targetLink.attr("href");
-        if (url) {
-          window.location.href = url;
-        }
+        keyMap.set(keyValue, $link);
       }
     });
 
-    // Log active shortcuts
+    // Add special case for Assets link
+    const $ctaWrapper = $('[fg-nav="cta-wrapper"]');
+    if ($ctaWrapper.length) {
+      const $ctaLink = $ctaWrapper.find("a").first();
+      if ($ctaLink.length) {
+        console.log(
+          `Adding keyboard shortcut: a for Assets link:`,
+          $ctaLink.attr("href")
+        );
+        keyMap.set("a", $ctaLink);
+      }
+    }
+
     console.log(
-      "Active keyboard shortcuts:",
+      `Keyboard map built with ${keyMap.size} shortcuts:`,
       Array.from(keyMap.keys()).join(", ")
     );
   }
 
-  // Clean up any existing handlers before starting
-  $(document).off("keypress.fgNav");
+  // Function to handle keyboard events
+  function handleKeyPress(e) {
+    // Ignore key events if target is an input or textarea
+    if ($(e.target).is("input, textarea")) {
+      return;
+    }
 
-  // Start initialization
-  initKeyboardNav();
+    // Convert keyCode to character
+    const key = String.fromCharCode(e.which).toLowerCase();
+
+    // Check if we have a link mapped to this key
+    const $targetLink = keyMap.get(key);
+    if ($targetLink) {
+      console.log(`Keyboard navigation: ${key} → ${$targetLink.attr("href")}`);
+
+      const url = $targetLink.attr("href");
+      if (url) {
+        // If this is a one-page navigation (anchor link)
+        if (url.startsWith("#")) {
+          e.preventDefault();
+
+          // Get the target element
+          const targetId = url.substring(1);
+          const $target = $("#" + targetId);
+
+          if ($target.length) {
+            // Close mobile menu if open
+            const $navButton = $('[fg-nav="button"]');
+            if ($navButton.length && window.innerWidth <= 991) {
+              $navButton.click();
+            }
+
+            // Scroll to the section
+            $("html, body").animate(
+              {
+                scrollTop: $target.offset().top,
+              },
+              800
+            );
+          }
+        } else {
+          // Regular link, navigate normally
+          window.location.href = url;
+        }
+      }
+    }
+  }
+
+  // Function to initialize keyboard navigation with retry
+  function initKeyboardNav(attempt = 1) {
+    const maxAttempts = 5;
+
+    // Build the keymap
+    buildKeyMap();
+
+    // If we found navigation items, set up the keyboard handler
+    if (keyMap.size > 0) {
+      console.log(
+        "Keyboard navigation ready with shortcuts:",
+        Array.from(keyMap.keys()).join(", ")
+      );
+
+      // Clean up any existing handlers before setting up new ones
+      $(document).off("keypress.fgNav");
+
+      // Set up keyboard handler
+      $(document).on("keypress.fgNav", handleKeyPress);
+    } else {
+      // If no items found yet and we haven't tried too many times, retry
+      if (attempt < maxAttempts) {
+        console.log(
+          `No navigation items found yet. Retrying in ${
+            250 * attempt
+          }ms (attempt ${attempt} of ${maxAttempts})...`
+        );
+        setTimeout(function () {
+          initKeyboardNav(attempt + 1);
+        }, 250 * attempt); // Incremental backoff
+      } else {
+        console.warn("Failed to find navigation items after multiple attempts");
+      }
+    }
+  }
+
+  // Set up a MutationObserver to rebuild the keymap when DOM changes
+  const navObserver = new MutationObserver(function (mutations) {
+    // Check if any navigation elements have been added or changed
+    const hasNavChanges = mutations.some(
+      (mutation) =>
+        // Check for attribute changes on elements with fg-nav attribute
+        (mutation.type === "attributes" &&
+          mutation.attributeName === "fg-nav") ||
+        // Check for added nodes that might have fg-nav attribute
+        (mutation.type === "childList" && mutation.addedNodes.length)
+    );
+
+    if (hasNavChanges) {
+      console.log(
+        "Navigation elements may have changed, rebuilding keyboard map..."
+      );
+      buildKeyMap();
+    }
+  });
+
+  // Start initialization with a slight delay to ensure DOM is ready
+  setTimeout(function () {
+    // Start initial setup
+    initKeyboardNav();
+
+    // Start observing the document for changes
+    navObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["fg-nav"],
+    });
+
+    console.log("Keyboard navigation observer started");
+  }, 300);
 });
 
 /* -----------------------
