@@ -27,14 +27,14 @@ Webflow.push(function () {
   // Add stagger animation styles
   var staggerStyle = document.createElement("style");
   staggerStyle.textContent = `
-      .fg-nav_item.is-stagger {
-        opacity: 0;
-        transition: opacity 0.1s ease-in-out;
-      }
-      .fg-nav_item.is-stagger.is-visible {
-        opacity: 1;
-      }
-    `;
+        .fg-nav_item.is-stagger {
+          opacity: 0;
+          transition: opacity 0.1s ease-in-out;
+        }
+        .fg-nav_item.is-stagger.is-visible {
+          opacity: 1;
+        }
+      `;
   document.head.appendChild(staggerStyle);
 
   setTimeout(function () {
@@ -42,8 +42,8 @@ Webflow.push(function () {
 
     if ($subnavRow.length) {
       /* -----------------------
-            01.1 – Create Subnav
-            ----------------------- */
+              01.1 – Create Subnav
+              ----------------------- */
       console.log("Creating subnav...");
       var $firstItem = $subnavRow.children().first();
       $subnavRow.children().not($firstItem).remove();
@@ -71,6 +71,7 @@ Webflow.push(function () {
           var $navItem = $("<a>", {
             class: `${getPrefixedClass("fg-nav_item")} is-subnav is-stagger`,
             href: "#" + sectionId,
+            "fg-nav": "item", // Added attribute here
           }).text(customText);
 
           navItems.push($navItem);
@@ -89,8 +90,8 @@ Webflow.push(function () {
       console.log("Subnav creation complete!");
     } else {
       /* -----------------------
-          01.2 – Create Nav (onepage)
-          ----------------------- */
+            01.2 – Create Nav (onepage)
+            ----------------------- */
       console.log("Subnav row not found, generating primary nav...");
 
       var $primaryNavRow = $('[class*="fg-nav_row"][class*="is-primary"]');
@@ -126,6 +127,7 @@ Webflow.push(function () {
               "fg-nav_item"
             )} w-inline-block is-stagger`,
             href: "#" + sectionId,
+            "fg-nav": "item", // Added attribute here
           });
 
           var $navBrackets = $("<div>", {
@@ -171,8 +173,8 @@ Webflow.push(function () {
     }
 
     /* -----------------------
-      02 – Set up Pagination
-      ----------------------- */
+        02 – Set up Pagination
+        ----------------------- */
     console.log("Setting up pagination...");
 
     // Get all main nav items with valid links
@@ -439,7 +441,7 @@ Webflow.push(function () {
 ----------------------- */
 $(document).on(
   "click",
-  '[class*="fg-nav_item"][href^="#"], [class*="fg-nav_overlay"]',
+  '[class*="fg-nav_item"][href^="#"], [class*="fg-nav_overlay"], [class*="fg-nav_brand"]',
   function (e) {
     // Log debugging information
     console.log("Clicked element:", this);
@@ -608,5 +610,67 @@ $(document).ready(function () {
         $('[class*="fg-font-preview_name-wrapper"]').show();
       }
     }, 250);
+  });
+});
+
+/* -----------------------
+07 – Toggle Nav Button Tablet/Mobile
+----------------------- */
+$(document).ready(function () {
+  // Track menu state
+  let menuOpen = false;
+
+  // Function to check if we're on a mobile/tablet device
+  function isMobileView() {
+    return $(window).width() <= 991;
+  }
+
+  $('[fg-nav="button"]').on("click", function () {
+    // Only execute on mobile/tablet devices
+    if (!isMobileView()) return;
+
+    if (!menuOpen) {
+      // OPEN MENU
+      console.log("Opening menu");
+
+      // Force display flex on nav items
+      $('[fg-nav="item"]').attr("style", "display: flex !important");
+
+      // Show CTA wrapper
+      $('[fg-nav="cta-wrapper"]').css("display", "flex");
+
+      // Animate overlay
+      $('[fg-nav="overlay"]')
+        .css({ display: "block", opacity: 0 })
+        .animate({ opacity: 1 }, 400);
+
+      menuOpen = true;
+    } else {
+      // CLOSE MENU
+      console.log("Closing menu");
+
+      // Animate overlay out
+      $('[fg-nav="overlay"]').animate({ opacity: 0 }, 400, function () {
+        // After animation completes, hide the overlay
+        $(this).css("display", "none");
+      });
+
+      // Hide nav items and CTA wrapper immediately
+      $('[fg-nav="item"]').attr("style", "display: none !important");
+      $('[fg-nav="cta-wrapper"]').css("display", "none");
+
+      menuOpen = false;
+    }
+  });
+
+  // Reset menu state when resizing above mobile breakpoint
+  $(window).on("resize", function () {
+    if (!isMobileView() && menuOpen) {
+      // Reset menu when going to desktop size
+      $('[fg-nav="overlay"]').css({ display: "none", opacity: 0 });
+      $('[fg-nav="item"]').removeAttr("style");
+      $('[fg-nav="cta-wrapper"]').removeAttr("style");
+      menuOpen = false;
+    }
   });
 });
